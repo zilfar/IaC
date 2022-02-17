@@ -112,3 +112,74 @@ To check if the vagrant servers work and have internet access, we'll individuall
 - The more servers there are, the more impossible it becomes to do everything manually (e.g. if you have 100 servers, how will you perform a command in all 100 of them without a controller like ansible?)
 - Can use ansible to gather information about all the servers at once or individual ones
 - Very simple and easy to set up (it took us about 10 minutes to install ansible, and 5 minutes to edit the hosts file)
+
+# What is IaC
+
+- Managing and provisioning of infrastructure through code instead of through manual processes with an emphasis on self-service
+- Such as being able to execute commands from multiple servers at once through code with a controller such as Ansible in YAML 
+- Results in consistency throughout your configuration because it's all coming from the same code using the controller, which minimises the risk of human error
+overall 
+- Results in financial savings for a business that implements IaC via increased productivity and makes it much easier to scale up and attach new servers to the controller
+
+ansible all -m ping
+
+# Ansible Playbooks
+- Playbooks save time
+- They are YAML/YAML files that are used to implement configuration management
+- They are also reusable 
+
+## Creating a playbook:
+  - file_name.yaml/yml
+  - Starts with 3 dashes
+  - Use spaces for indentation
+  - Check logs by using `gather_facts: yes`
+  - To get admin access, use `become: true`
+
+  ```yaml
+  # YAML/YML file to create a playbook to configure nginx in our web server 
+---
+# starts with 3 dashes
+
+# add the name of the host/instace/vm
+-  hosts: web
+
+# collect logs or gather facts
+   gather_facts: yes
+
+# we need admin access to install anything
+   become: true
+
+# add instructions - install nginx - within the web server
+   tasks:
+   -  name: Installing nginx for our app server
+      apt: pkg=nginx state=present
+# be mindful of indentation
+```
+<br>
+
+### Next, we will make a yml file to move the app folder into the web server, install all the dependencies required and then install and run the application:
+```yaml
+---
+
+-  hosts: web
+   gather_facts: yes
+   become: true
+   tasks:
+   -  name: moving app folder in
+      synchronize:
+        src: /home/vagrant/app
+        dest: ~/
+   -  name: load a specific version of nodejs
+      shell: curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+
+   -  name: install the required packages
+      apt:
+        pkg:
+          - nginx
+          - nodejs
+          - npm
+        update_cache: yes
+   -  name: install and run the app
+      shell:
+         cd app; npm install; screen -d -m npm start
+```
